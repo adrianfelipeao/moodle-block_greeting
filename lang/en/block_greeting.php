@@ -24,4 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'greeting';
+$string['greeting'] = 'Hello! Welcome to Moodle plugin development.';
+$string['greeting:addinstance'] = 'Add a new greeting block';
+$string['greeting:myaddinstance'] = 'Add a new greeting block to the Dashboard';
+$string['jsloaded'] = 'This block was loaded via JavaScript.';
+$string['pluginname'] = 'Greeting';
+$string['privacy:metadata'] = 'The Greeting block does not store any personal data.';

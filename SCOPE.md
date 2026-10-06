@@ -1,387 +1,330 @@
-# Escopo do Projeto — [Nome de exibição do Plugin] (`[type_name]`)
+# Escopo do Projeto — Saudação (`block_greeting`)
 
-> Copie este arquivo para `SCOPE.md` na raiz do seu plugin e preencha. É um documento
-> **interno** de planejamento (em pt-BR) — não confundir com o `README.md` público.
-> Ele fica **versionado** (o professor corrige pelo repositório) mas **fora do zip
-> publicado** — o `plugin-new` já configura o `.gitattributes` (`export-ignore`) para isso.
-
-> [!NOTE]
-> **Regras de código (para você e para a IA):**
-> - `.github/copilot-instructions.md` (na raiz deste plugin) — regras essenciais que o
->   Copilot carrega em todo prompt.
-> - `.github/instructions/*.instructions.md` — regras profundas por área (banco, backup,
->   privacidade, front-end, atividade, i18n, testes), carregadas automaticamente quando você
->   edita o arquivo correspondente.
-> - `docs/REGRAS-DE-CODIGO.md` **do laboratório** — a referência completa e comentada.
->
-> **Ambiente de desenvolvimento:** este plugin é desenvolvido no Codespace **Moodle Plugin
-> Lab**. Os comandos essenciais estão na seção "Ambiente" do `.github/copilot-instructions.md`
-> (aqui na raiz do plugin); a referência completa em `docs/AMBIENTE.md` **do laboratório**.
-> Fora do Codespace do lab esses comandos não existem.
-
-> [!NOTE]
-> **Frankenstyle** (`type_name`): curto, em **inglês**, minúsculo, de preferência um único
-> token, **verificado livre no Moodle Plugins Directory** antes de fixar (página 404 +
-> `download.moodle.org/api/1.3/pluginfo.php?plugin=type_name` retorna "não encontrado").
-> Renomear depois é caro (cascateia em tabelas, capabilities, chaves de lang, caminhos).
-> O **Nome de exibição** (string `pluginname`) é separado e **localizável** — pode ser em
-> português.
+> **Exercício do laboratório.** SCOPE pré-preenchido: seu trabalho é **construir** este
+> plugin seguindo o documento, com a ajuda do Copilot. Copie este arquivo para a raiz do seu
+> plugin como `SCOPE.md`.
 
 - **Versão do documento:** 1.0
-- **Data:** [DD/MM/AAAA]
 - **Autor:** [Seu nome]
-- **Tipo de plugin:** [`block_` / `mod_` / `local_` / `filter_` / `report_` / ...]
-- **Compatibilidade alvo:** Moodle [5.x / 4.5+]
-- **PHP mínimo:** [8.2 / 8.3]
+- **Tipo de plugin:** `block_`
+- **Compatibilidade alvo:** Moodle 5.x
+- **PHP mínimo:** 8.3
 - **Licença:** GPL v3+
 
-> [Uma frase concisa: o que o plugin faz, para quem, em que versões do Moodle.]
+> Bloco que exibe uma frase de saudação. Serve para exercitar o fluxo completo de
+> desenvolvimento (criar arquivos, commitar, verificações, CI, ver funcionando no Moodle).
 
 ---
 
 ## 1. Contextualização e Objetivos
 
-- **Problema:** [Qual lacuna no Moodle o plugin resolve?]
-- **Solução:** [Como resolve? Fluxo de alto nível.]
-- **Público-alvo:** [Professores, estudantes, gestores, TI...]
-- **Justificativa:** [Ganho pedagógico, de gestão ou técnico. Quando o benefício é limitado?]
-- **Distribuição:** [GPL v3+, Moodle Plugins Directory, uso interno...]
+- **Problema:** exercício — praticar o ciclo de criação de um plugin Moodle.
+- **Solução:** um bloco mínimo que renderiza uma saudação num template Mustache.
+- **Público-alvo:** o próprio estudante.
+- **Distribuição:** não será publicado (é exercício). Para um plugin real, o Frankenstyle
+  precisaria ser verificado livre no Plugins Directory.
 
 ---
 
-## 2. Análise de Alternativas (Estado da Arte)
+## 2. Análise de Alternativas
 
-> Preencher **antes** de detalhar o escopo. Se algo já resolve bem o problema, a decisão
-> certa pode ser usar/estender, não construir do zero. Fontes: Plugins Directory,
-> funcionalidades do core, plugins já instalados, processo manual atual.
-
-| Solução existente | Tipo | O que faz | Limitação / lacuna |
-|---|---|---|---|
-| [nome] | Directory / core / manual / pago | [...] | [por que não basta] |
-
-- **Diferencial do plugin:** [1–3 pontos que nenhuma alternativa entrega.]
-- **Veredito (build vs. reuse):** [construir / estender X / contribuir no core]. [1 frase.]
+N/A — exercício.
 
 ---
 
 ## 3. Escopo, Versionamento e Limites
 
-### 3.1. Escopo da V1 (MVP publicável)
+### 3.1. V1
 
-[Conjunto mínimo de funcionalidades do primeiro release estável. MVP enxuto.]
-- [Funcionalidade essencial 1]
-- [Funcionalidade essencial 2]
+- Bloco que mostra uma frase fixa, vinda de uma string de idioma, num template Mustache.
+- Adicionável ao Dashboard e a páginas de curso.
 
-### 3.2. Roadmap futuro (opcional)
+### 3.2. Nível 2 (opcional, depois de terminar a V1)
 
-| Versão | Funcionalidade | Por que adiar |
-|---|---|---|
-| V2 | [...] | [reduz risco do MVP, etc.] |
+- Tornar a frase **configurável** por instância: `edit_form.php` com um campo de texto,
+  `get_content()` lê `$this->config->text` e passa por `format_string()`.
 
-### 3.3. Fora de escopo (todas as versões)
+### 3.3. Fora de escopo
 
-[Itens **explicitamente** descartados — principal defesa contra *scope creep*.]
-- [Item 1]
-- [Item 2]
+- Configuração global de admin. Múltiplas frases. Qualquer persistência em banco.
 
 ---
 
-## 4. Requisitos Funcionais e Mecânicas
+## 4. Requisitos Funcionais
 
-[Regras de negócio detalhadas, fórmulas de cálculo, comportamento sob diferentes
-configurações.]
-- **Funcionalidade A:** [lógica, parâmetros]
-- **Funcionalidade B:** [...]
+- `init()` define o título do bloco com `get_string('pluginname', 'block_greeting')`.
+- `get_content()`:
+  - retorna cedo se `$this->content` já existe;
+  - obtém a frase de `\block_greeting\local\greeting_text::get_message()` — **não** chame
+    `get_string('greeting', ...)` direto aqui; é a classe que sabe montar o texto;
+  - monta `$this->content->text` com
+    `$OUTPUT->render_from_template('block_greeting/content', ['greeting' => $message])`;
+  - registra `$this->page->requires->js_call_amd('block_greeting/greeting', 'init');`;
+  - `$this->content->footer = ''`.
+- `applicable_formats()` retorna `['all' => true]`.
+- Métodos que sobrescrevem `block_base` sem mudar semântica usam `#[\Override]` — **exceto
+  `init()`**: `block_base` não declara esse método, então `#[\Override]` nele fatala
+  (PHP 8.3+ exige um método de verdade pra sobrescrever). Só `get_content()` leva o atributo.
+- `\block_greeting\local\greeting_text` (`classes/local/greeting_text.php`): uma classe com
+  um único método estático, `get_message(): string`, que retorna
+  `get_string('greeting', 'block_greeting')`. Existe só pra separar "de onde vem a frase" de
+  "como o bloco se comporta" — no plugin principal de vocês essa classe cresceria pra ter
+  lógica de verdade; aqui ela é minúscula de propósito, só pra fixar o padrão.
 
 ---
 
-## 5. Arquitetura de Dados (Banco)
+## 5. Arquitetura de Dados
 
-> [!NOTE]
-> **Sem tabelas próprias?** Se a persistência for só cache MUC e/ou configurações de admin
-> (`config_plugins`), não há `db/install.xml` — declare isso aqui em uma linha e pule as
-> regras XMLDB abaixo.
-
-> [!IMPORTANT]
-> **Regras XMLDB (se houver tabelas):**
-> - Nomes: só `a-z 0-9 _`, começam com letra. Máx. **53 chars** (tabela) / **63** (campo),
->   incluindo o prefixo Frankenstyle.
-> - **Auditoria temporal:** toda tabela com `timecreated` e `timemodified` (`INT`, NOTNULL)
->   desde o início — adicionar depois custa um `db/upgrade.php`.
-> - **Campos de código/hash** (shortcodes, tokens): `NOTNULL` + índice `UNIQUE`. Gerar com
->   loop `do/while` checando colisão antes de gravar.
-> - **`install.xml` canônico:** todo campo não-autonumber com `SEQUENCE="false"` explícito;
->   raiz `<XMLDB>` com `xmlns:xsi` + `xsi:noNamespaceSchemaLocation`. Use um `install.xml`
->   do core como referência.
-> - **Limpeza ao excluir (decidir por tabela):** chave de instância própria
->   (`blockinstanceid`, id do `mod_*`) → limpa em `instance_delete()` /
->   `<modname>_delete_instance()`; chave `courseid` → observer de `\core\event\course_deleted`.
->   O Moodle **não** cascateia tabela de plugin; `KEY TYPE="foreign"` é só documentação.
-
-```sql
--- mdl_[type_name]_[tabela]  — [propósito]
-  id            BIGINT PK AUTO_INCREMENT
-  [campo]       [TIPO] [RESTRIÇÕES]
-  timecreated   BIGINT NOTNULL
-  timemodified  BIGINT NOTNULL
-  UNIQUE([campo_a], [campo_b])  -- se aplicável
-```
+Sem tabelas próprias. Sem cache. Sem configuração persistida (na V1). Não há `db/install.xml`.
 
 ---
 
 ## 6. Estrutura de Diretórios e Arquivos
 
-> Marcações: `✅` implementado e validado · `🛠️` em desenvolvimento · `❌` pendente/não criado.
-> **Escale para baixo:** plugins simples nascem com a maioria dos arquivos `❌` permanente —
-> isso é esperado. Remova da árvore o que não se aplica.
-> **Tipos especiais** (`format_`, `filter_`, `qtype_`, `theme_`, `auth_`, `enrol_`) têm
-> arquivos de entrada e estrutura de `classes/` próprios — monte a árvore a partir de um
-> plugin do mesmo tipo no core, não force esta.
-
 ```
-[plugin]/
-├── .github/workflows/ci.yml          ❌ (CI a cada commit, desde o início)
-├── amd/
-│   ├── build/                        ❌ (bundles compilados via grunt — commitar)
-│   └── src/[module].js               ❌ (módulos AMD/ESM)
-├── backup/moodle2/                   ❌ (backup/restore nativo — se há dados relacionais)
-│   ├── backup_[type_name]_stepslib.php
-│   └── restore_[type_name]_stepslib.php
-├── classes/
-│   ├── completion/custom_completion.php  ❌ (se FEATURE_COMPLETION_HAS_RULES — ver §11)
-│   ├── event/[event].php             ❌
-│   ├── external/[ws].php             ❌ (endpoints: {type_name}_{verbo}_{substantivo})
-│   ├── local/[dominio].php           ❌ (lógica de negócio autoloaded)
-│   ├── output/renderer.php           ❌
-│   ├── privacy/provider.php          ❌ (SEMPRE — null_provider se não há dado pessoal)
-│   └── task/[task].php               ❌
+blocks/greeting/
+├── .github/workflows/ci.yml           ✅ (vem do plugin-new)
+├── .github/copilot-instructions.md    ✅ (vem do plugin-new)
+├── .github/instructions/              ✅ (vem do plugin-new)
+├── block_greeting.php                 ❌ classe do bloco
+├── classes/local/greeting_text.php    ❌ de onde vem a frase (autoload, namespace)
+├── amd/src/greeting.js                ❌ módulo AMD (fonte)
+├── amd/build/greeting.min.js          ⚙️ gerado por `npx grunt amd` — não editar à mão
 ├── db/
-│   ├── access.php                    ❌ (capabilities)
-│   ├── events.php                    ❌ (observers de eventos do core)
-│   ├── install.xml                   ❌ (schema XMLDB)
-│   ├── services.php                  ❌ (registro de Web Services)
-│   ├── tasks.php                     ❌ (cron — usar 'R' no agendamento)
-│   ├── uninstall.php                 ❌ (só se há user_preferences ou dado em tabela core)
-│   └── upgrade.php                   ✅ (SEMPRE existe, mesmo vazio — o Directory exige)
+│   ├── access.php                     ❌ capabilities
+│   └── upgrade.php                    ✅ (vem do plugin-new, no-op)
 ├── lang/
-│   ├── en/[type_name].php            ❌ (chaves em ordem alfabética estrita)
-│   └── pt_br/[type_name].php         ❌ (em sincronia com en; "estudante" nunca "aluno")
-├── pix/icon.svg                      ❌
-├── templates/[nome].mustache         ❌ (com Example context (json):)
-├── tests/
-│   ├── behat/[nome].feature          ❌
-│   ├── external/[nome]_test.php      ❌
-│   ├── privacy_provider_test.php     ❌
-│   └── local/[nome]_test.php         ❌
-├── view.php / index.php / mod_form.php   ❌ (entrada — varia por tipo)
-├── lib.php                           ❌ (SÓ para callbacks legados sem equivalente)
-├── settings.php                      ❌ (config de admin)
-├── styles.css                        ❌ (escopado com .path-[tipo]-[nome], dual-header)
-├── version.php                       ❌
-├── CHANGES.md                        ❌ (vazio até a 1ª tag; cabeçalho `## [vX.Y.Z] — YYYY-MM-DD`)
-├── README.md                         ❌ (público, bilíngue)
-├── .gitattributes                    ❌ (export-ignore de .github/ e SCOPE.md — plugin-new cria)
-└── SCOPE.md                          ✅ (este doc — versionado, mas export-ignore)
+│   ├── en/block_greeting.php          ❌
+│   └── pt_br/block_greeting.php       ❌
+├── templates/content.mustache         ❌
+├── tests/greeting_test.php            ❌
+├── styles.css                         ❌
+├── version.php                        ✅ (vem do plugin-new — ajustar release/requires)
+├── .gitattributes / .gitignore / README.md   ✅ (vem do plugin-new)
+└── SCOPE.md                           ✅ (este documento)
 ```
-
-> [!IMPORTANT]
-> **`backup/moodle2/` em `mod_*`:** `restore_[type_name]_stepslib.php::define_structure()`
-> deve retornar `$this->prepare_activity_structure($paths)`, nunca `$paths` direto — senão
-> "Duplicar atividade" e backup/restore de curso falham com `unknown_context_mapping`.
 
 ---
 
-## 7. Web Services (API AJAX)
+## 7. Web Services
 
-> Nomeação: `{type_name}_{verbo}_{substantivo}`. Registrar em `db/services.php`, implementar
-> estendendo `\core_external\external_api`.
-
-| Web Service | Tipo | Descrição | Entrada | Retorno |
-|---|---|---|---|---|
-| `[type_name]_[verbo]_[nome]` | `read`/`write` | [...] | `[param]` ([tipo]) | [JSON] |
+Nenhum.
 
 ---
 
 ## 8. Interface, Templates e Acessibilidade
 
-- **`view.php` de `mod_*`:** não imprimir o nome da atividade manualmente — o layout
-  `incourse` já renderiza ícone + nome + selo de conclusão via `$PAGE->activityheader`.
-  `$PAGE->set_pagelayout('incourse')` em todo dispositivo.
-- **`mod_*` — declarar `FEATURE_MOD_PURPOSE`** no `_supports()` (senão o plugin não aparece
-  em nenhuma categoria do chooser "Adicionar atividade"). Assinatura do `_supports()`:
-  `: mixed`, nunca `: ?bool` (coage a string do propósito para `bool(true)` em silêncio).
-- **Navegação e descoberta:** para cada página, declarar como cada papel chega até ela (nó
-  de navegação, menu do usuário, Preferências, admin, bloco). `local_`/`report_` quase
-  sempre precisam de callbacks `*_extend_navigation_*` em `lib.php` (bumpar `version.php` +
-  purgar ao adicionar). Página alcançável só por URL direta = furo de descoberta ou é
-  intencional — decida.
-- **Mustache:** HTML só em `templates/`, com `@template component/nome` e
-  `Example context (json):` no segundo bloco `{{! }}`. `{{{valor}}}` só para markup
-  confiável e estático; campo armazenado ou vindo de IA usa `{{valor}}` e é sanitizado na
-  escrita.
-- **CSS:** escopado com `.path-[tipo]-[nome]`; sem `!important`; cores via `var(--nome, #fb)`.
-- **Bootstrap 4/5:** não usar classe só-BS5 que quebre no 4.5. `core/modal` (nunca
-  `core/modal_factory`). Botão de fechar com `data-bs-dismiss` + `data-dismiss`.
-- **Acessibilidade (WCAG AA):** `aria-hidden` em ícone decorativo; `aria-label` em elemento
-  interativo sem texto; contraste ≥ 4.5:1; nunca cor sozinha para transmitir estado; alvo
-  de toque ≥ 44×44px. Validar com simulador de daltonismo + leitor de tela + só teclado.
+- **`templates/content.mustache`:** primeiro um bloco `{{! }}` só com a **licença GPL** e,
+  depois dele, o bloco do `@template` (segundo bloco, como o verificador exige):
+  ```
+  {{!
+      This file is part of Moodle - https://moodle.org/
+
+      Moodle is free software: you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation, either version 3 of the License, or
+      (at your option) any later version.
+
+      Moodle is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+
+      You should have received a copy of the GNU General Public License
+      along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+  }}
+  {{!
+      @template block_greeting/content
+
+      Example context (json):
+      {
+          "greeting": "Hello!"
+      }
+  }}
+  <p class="block_greeting-message">{{greeting}}</p>
+  ```
+  Chave dupla `{{greeting}}` (a string é conteúdo renderizado, não markup confiável).
+- **`styles.css`:** começa com o **cabeçalho duplo** — a licença GPL e, colado embaixo, o
+  JSDoc (não pode faltar):
+  ```css
+  /**
+   * This file is part of Moodle - https://moodle.org/
+   *
+   * Moodle is free software: you can redistribute it and/or modify
+   * it under the terms of the GNU General Public License as published by
+   * the Free Software Foundation, either version 3 of the License, or
+   * (at your option) any later version.
+   *
+   * Moodle is distributed in the hope that it will be useful,
+   * but WITHOUT ANY WARRANTY; without even the implied warranty of
+   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   * GNU General Public License for more details.
+   *
+   * You should have received a copy of the GNU General Public License
+   * along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+   */
+  /**
+   * Styles for block_greeting.
+   *
+   * @package    block_greeting
+   * @copyright  2026 [Seu nome]
+   * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+   */
+  ```
+  Depois do cabeçalho, uma regra, escopada pela classe do bloco:
+  ```css
+  .block_greeting .block_greeting-message {
+      font-weight: 600;
+      color: var(--primary, #0f6cbf);
+  }
+  ```
+- Sem ícone decorativo, sem imagem, sem input — nada de a11y extra nesta V1.
+- **`amd/src/greeting.js`:** ao carregar o bloco, mostra uma notificação (`core/notification`)
+  com o texto da string `jsloaded`, obtida via `core/str` — não em `get_content()`:
+  ```js
+  // This file is part of Moodle - https://moodle.org/
+  //
+  // Moodle is free software: you can redistribute it and/or modify
+  // it under the terms of the GNU General Public License as published by
+  // the Free Software Foundation, either version 3 of the License, or
+  // (at your option) any later version.
+  //
+  // Moodle is distributed in the hope that it will be useful,
+  // but WITHOUT ANY WARRANTY; without even the implied warranty of
+  // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  // GNU General Public License for more details.
+  //
+  // You should have received a copy of the GNU General Public License
+  // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+  /**
+   * Shows a notification when the greeting block loads.
+   *
+   * @module     block_greeting/greeting
+   * @copyright  2026 [Seu nome]
+   * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+   */
+
+  import Notification from 'core/notification';
+  import {getString} from 'core/str';
+
+  export const init = async() => {
+      const message = await getString('jsloaded', 'block_greeting');
+      Notification.addNotification({message, type: 'info'});
+  };
+  ```
+  O cabeçalho de licença + `@module` é obrigatório no topo do arquivo. Mostra o padrão AMD do Moodle (`export const init`, sem jQuery, sem `<script>` solto) e o
+  mesmo princípio de "nada de texto hardcoded" — só que do lado do JS: a mensagem também vem
+  de `get_string()` (via `core/str`), nunca escrita direto no `.js`.
 
 ---
 
-## 9. Internacionalização — lista inicial de strings
+## 9. Internacionalização — strings
 
-[Enumerar as principais strings de UI, em **ordem alfabética da chave**. Toda chave em
-`lang/en` tem equivalente em `lang/pt_br` no mesmo commit. Valores em uma linha.]
+Chaves em **ordem alfabética estrita**. `lang/en` e `lang/pt_br` em sincronia.
 
 | Chave | EN | PT-BR |
 |---|---|---|
-| `pluginname` | "[Name]" | "[Nome]" |
+| `greeting` | "Hello! Welcome to Moodle plugin development." | "Olá! Bem-vindo ao desenvolvimento de plugins Moodle." |
+| `greeting:addinstance` | "Add a new greeting block" | "Adicionar um novo bloco de saudação" |
+| `greeting:myaddinstance` | "Add a new greeting block to the Dashboard" | "Adicionar um novo bloco de saudação ao Painel" |
+| `jsloaded` | "This block was loaded via JavaScript." | "Este bloco foi carregado via JavaScript." |
+| `pluginname` | "Greeting" | "Saudação" |
+| `privacy:metadata` | "The Greeting block does not store any personal data." | "O bloco Saudação não armazena nenhum dado pessoal." |
 
 ---
 
-## 10. Bibliotecas de Terceiros (opcional)
+## 10. Bibliotecas de Terceiros
 
-> Só se o plugin empacotar bibliotecas externas. Cada uma: declarada em `thirdpartylibs.xml`,
-> licença compatível com GPL v3+, `readme_moodle.txt` com URL/build/patches.
->
-> **Biblioteca (JS/CSS) → empacotar no zip, NUNCA carregar de CDN.** Um **serviço** externo
-> que você integra (player de vídeo, API de IA, mapas) é outra coisa — não entra aqui, vai
-> para a §12 (Privacidade) via `add_external_location_link`.
-
-| Item | Versão | Fonte | Licença | Uso |
-|---|---|---|---|---|
-| [...] | [...] | [...] | [...] | [...] |
+Nenhuma.
 
 ---
 
-## 11. Dependências e Integrações Nativas
+## 11. Dependências e Integrações
 
-- **Dependências soft:** [outro plugin, com verificação `class_exists()` em runtime.]
-- **APIs do core usadas:** DML, Completion, Gradebook, Privacy, Events, File API, ...
-
-> [!IMPORTANT]
-> **Regra de conclusão customizada (`FEATURE_COMPLETION_HAS_RULES`)** — declarar o
-> `_supports()` e o checkbox no `mod_form.php` **não basta**. São necessárias 3 peças
-> (nenhuma pega por ferramenta estática):
-> 1. `classes/completion/custom_completion.php` estendendo
->    `\core_completion\activity_custom_completion`.
-> 2. `<type_name>_get_coursemodule_info()` em `lib.php` populando
->    `customdata['customcompletionrules'][regra]`.
-> 3. `completion_info::update_state($cm, ..., $userid)` chamado no momento exato em que a
->    condição rastreada muda (o Moodle não tem tarefa que recalcula conclusão automática).
-
-> [!IMPORTANT]
-> **Integração com `core_ai` (Manager consumer):** respeitar o toggle de IA por
-> curso/módulo (`course.enableaitools`), não só o gate global. Passar o `\context` real
-> (nunca `context_system`) e chamar `$manager->is_action_enabled_in_context($context,
-> $actionclass)` antes de `process_action()`. Esse método não existe no Moodle 4.5 — se o
-> plugin suporta 4.5+5.x, envolver em `method_exists(...)` retornando `true` quando ausente.
+- APIs do core: Output (`render_from_template`), String Manager (`get_string`).
+- APIs do core em JS: `core/notification`, `core/str`.
+- Sem dependência de outros plugins.
 
 ---
 
-## 12. Privacidade — Mapa de Dados Pessoais
+## 12. Privacidade
 
-> Todo plugin tem Privacy Provider. Três casos:
-> - Sem dado pessoal e sem chamada externa → `\core_privacy\local\metadata\null_provider`.
-> - Sem dado pessoal mas **com** chamada a serviço de terceiros → `metadata\provider` só com
->   `$collection->add_external_location_link('host', ...)`.
-> - Com dado pessoal → mapear abaixo e implementar `get_metadata()`,
->   `get_contexts_for_userid()`, `export_user_data()`, `delete_data_for_user()`,
->   `delete_data_for_users()`; preferências em `export_user_preferences()`.
+Não armazena nenhum dado pessoal e não faz chamada externa →
+`classes/privacy/provider.php` implementa `\core_privacy\local\metadata\null_provider`
+(retorna a string `privacy:metadata`).
 
-| Tabela / local | Dados pessoais | Finalidade |
-|---|---|---|
-| `[type_name]_[tabela]` | `userid`, `[campo]` | [por que armazena] |
+> Adicione a chave `privacy:metadata` nas duas línguas (na posição alfabética: entre
+> `pluginname` e o resto, se houver).
 
 ---
 
-## 13. Checklist de Segurança e Boas Práticas
+## 13. Checklist de Segurança
 
-- [ ] Sem `$DB` dentro de loop (N+1) — bulk antes.
-- [ ] Query por ID externo inclui filtro de contexto/curso/instância já validado.
-- [ ] `require_sesskey()` / `confirm_sesskey()` em toda rota destrutiva ou POST.
-- [ ] Sem `echo $var` — `s()`, `format_string()`, `format_text()`.
-- [ ] JS só em `amd/src/`, carregado via `js_call_amd()`.
-- [ ] SQL só com placeholders (`?` / `:nome`).
-- [ ] pt-BR: "estudante", nunca "aluno". Chaves de lang em ordem alfabética. Sem comentário
-      inline em lang.
-- [ ] Nenhuma linha de PHP > 132 chars (exceto valores em `/lang`).
-- [ ] Privacy Provider mapeando todos os dados pessoais e conexões externas.
-- [ ] Evento de auditoria (`\core\event\base`) em toda ação que muda dados do estudante.
-- [ ] `gradepass`: se `mod_form.php` mostra o campo "Nota para aprovação",
-      `*_grade_item_update()` aplica o valor direto no `grade_item` (o `grade_update()` do
-      core descarta a chave em silêncio).
-- [ ] Backup/restore com remapeamento de IDs, se há dados relacionais.
-- [ ] Limpeza ao excluir instância/curso (ver §5).
-- [ ] Conclusão customizada: as 3 peças da §11 existem e foram validadas ao vivo.
-- [ ] Constante/função mais nova que o Moodle mínimo suportado: protegida com `defined()` /
-      `function_exists()`, nunca por checagem de versão hardcoded.
+- [ ] Sem `echo` de variável — o template renderiza via `{{greeting}}`.
+- [ ] `db/access.php`: as duas capabilities têm string de lang.
+- [ ] Nenhuma linha de PHP > 132 caracteres.
+- [ ] pt-BR e en em sincronia, chaves em ordem alfabética, sem comentário inline em lang.
+- [ ] Privacy Provider (`null_provider`).
 
 ---
 
 ## 14. Plano de Testes
 
-> **Arquitetura testável:** camada de request/render **fina** (lê `required_param`, faz
-> `require_login`/`require_capability`/`require_sesskey`, chama o método de negócio,
-> renderiza) — intestável por design. **Lógica de negócio** em `classes/local/`, com
-> parâmetros explícitos — é o que o PHPUnit exercita. Mirar ~90–100% dos métodos de negócio.
-
-- **PHPUnit:** `tests/` espelha `classes/`. Testes de conformidade obrigatórios quando
-  aplicável: `privacy_provider_test.php`, `backup_restore_test.php`, isolamento entre
-  instâncias. Anotações PHPDoc (`@covers`, `@dataProvider`), nunca atributos, se suporta
-  4.5+5.x.
-- **Behat:** cenário fim-a-fim do fluxo do estudante/professor. Frase de step identifica o
-  plugin. Um `Given`/`When`/`Then` por cenário.
+- **PHPUnit** — `tests/greeting_test.php`, namespace `block_greeting`, classe
+  `greeting_test` (`final`, estende `\advanced_testcase`), com **duas** linhas de `@covers`
+  no docblock **da classe** (o que fica logo acima de `class greeting_test`, não o do topo
+  do arquivo — o PHPCS só reconhece cobertura "de classe" nesse): `@covers \block_greeting`
+  e `@covers \block_greeting\local\greeting_text`. Um único teste exercita as duas classes
+  (o bloco chama a classe), então as duas entram na mesma anotação em vez de um segundo
+  arquivo de teste (regra de cobertura do CLAUDE.md).
+  - Teste: a string `greeting` (via `get_string`) aparece no HTML que o template produz.
+    Renderize o template diretamente com `$PAGE->get_renderer('core')->render_from_template(...)`
+    ou compare `get_string('greeting', 'block_greeting')` com o resultado — o Copilot ajuda
+    a achar a forma mais limpa.
+- **`amd/src/greeting.js`** — sem teste automatizado nesta V1 (fora de escopo); verificar a
+  olho no navegador.
+- **Behat** — não obrigatório neste exercício.
 
 ---
 
 ## 15. Critérios de Aceite
 
-| ID | Critério | Status |
-|---|---|---|
-| CA01 | Usuário sem a capability não vê o recurso nem acessa a URL direta. | ❌ |
-| CA02 | [Funcionalidade principal] opera conforme a §4 sob config padrão. | ❌ |
-| CA03 | [Caso de borda / config alternativa]. | ❌ |
-| CA04 | Nenhuma string visível hardcoded — todas via `get_string()`. | ❌ |
-| CA05 | Passa no `moodle-plugin-ci` e no Moodle Plugin Check sem erros. | ❌ |
-| CA06 | Backup e Restore preservam dados e mapeamento de IDs (se aplicável). | ❌ |
-| CA07 | Privacy API exporta e deleta todos os dados pessoais (se aplicável). | ❌ |
+| ID | Critério |
+|---|---|
+| CA01 | O plugin instala pelo painel do Moodle sem erro. |
+| CA02 | O bloco pode ser adicionado ao Dashboard e mostra a frase da string `greeting`. |
+| CA03 | Nenhuma string visível está hardcoded — tudo via `get_string()`. |
+| CA04 | `git commit` passa nos gates (`php -l`, PHPCS, get_string, capability-strings...). |
+| CA05 | `moodle-check` roda sem `<error>` nos arquivos PHP. |
+| CA06 | `moodle-phpunit blocks/greeting` passa. |
+| CA07 | O CI (GitHub Actions) fica verde depois do `plugin-publish`. |
 
 ---
 
-## 16. Roteiro de Implementação (Ordem de Construção)
+## 16. Roteiro de Implementação
 
-> **Ordem de engenharia** (sequência de criação dos arquivos) — não confundir com a §3
-> (o que entra em cada release). Substitua as 6 fases genéricas abaixo pelo roadmap real
-> orientado a funcionalidade quando ele existir. Fases inteiras podem não se aplicar.
->
-> **Antes de marcar qualquer fase `✅`:** rodar `moodle-scope-audit <tipo/nome>` e confirmar
-> zero pendências daquela fase (diff mecânico entre a árvore do §6 e o disco). Toda fase que
-> introduz uma tela de cadastro de dados precisa de um critério de aceite escrito como
-> **jornada real do usuário** (cadastrar pela UI, sem insert manual no banco) — e esse
-> critério só conta como cumprido após validação ao vivo, não só PHPUnit passando.
-
-| Fase | Arquivos | Definition of Done | Status |
-|:--:|:--|:--|:--:|
-| **1: Core & infra** | `.gitignore`, `ci.yml`, `version.php`, `db/install.xml`, `db/access.php`, `lang/en` + `lang/pt_br`, `classes/local/`, `tests/local/`, `tests/fixtures/` | Banco instala sem erro, capabilities criadas, PHPUnit da lógica de domínio passando 100% | ❌ |
-| **2: Telas estáticas & admin** | `settings.php`, `lib.php` (se aplicável), `classes/completion/` (se aplicável), `styles.css`, `pix/`, `classes/output/`, entrada (`view.php`/`index.php`/`mod_form.php`), strings de lang | Instalação limpa pelo admin, criar/editar instância sem erro PHP nem de render | ❌ |
-| **3: UI dinâmica & Web Services** | `db/services.php`, `classes/external/`, `tests/external/`, `templates/`, `amd/src/` + `amd/build/`, telas de cadastro, strings de lang | Mustache renderiza, WS testados, AJAX sem script inline; tela de cadastro validada ao vivo | ❌ |
-| **4: Tasks, events & mensagens** | `db/tasks.php`, `db/events.php`, `db/messages.php`, `classes/task/`, `classes/event/`, strings de lang | Cron roda e testado, eventos do core escutados, notificação entregue | ❌ |
-| **5: Portabilidade, privacidade & segurança** | `backup/moodle2/`, `db/upgrade.php`, `db/uninstall.php` (se aplicável), `classes/privacy/provider.php`, testes de backup/privacy/isolamento, strings de lang | Backup/restore preservam IDs, Privacy API exporta/deleta, isolamento validado | ❌ |
-| **6: Homologação & deploy** | `CHANGES.md`, `README.md`, `tests/behat/` + pipeline de release | Behat passando, lang em sincronia, `moodle-plugin-ci` local sem erro, pronto para publicar | ❌ |
+Ver `docs/exemplo/PASSOS.md`. Ordem sugerida: `version.php` → `lang/` → `db/access.php` →
+`classes/local/greeting_text.php` → `block_greeting.php` → `templates/content.mustache` →
+`styles.css` → `amd/src/greeting.js` (+ `npx grunt amd`) → `classes/privacy/provider.php` →
+`tests/greeting_test.php`.
 
 ---
 
-## 17. Decisões de Arquitetura e Trade-offs
+## 17. Trade-offs
 
-| Decisão | Justificativa / compromisso |
-|:--|:--|
-| [ex.: Cron vs. processamento on-demand] | [ex.: processamento pesado no cron para não pesar nas requisições do usuário] |
+Frase fixa em vez de configurável na V1 — reduz a superfície (sem `edit_form.php`, sem
+`format_string` de config) para focar no fluxo. A versão configurável fica como Nível 2.
+
+O JS é uma notificação única ao carregar, não uma interação (clique, formulário) — o objetivo
+é passar pelo padrão AMD/`core/str`/`core/notification` e pelo gate de ESLint, sem entrar em
+território de acessibilidade de elemento interativo (foco por teclado, `aria-*`), que é
+assunto pro plugin principal de vocês, não pra este aquecimento.
 
 ---
 
 ## 18. Histórico do Documento
 
-| Data | Versão doc | Alteração |
+| Data | Versão | Alteração |
 |---|---|---|
-| [DD/MM/AAAA] | 1.0 | Escopo inicial. |
+| [hoje] | 1.0 | Escopo do exercício. |
